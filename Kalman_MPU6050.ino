@@ -3,19 +3,19 @@
 #include <Kalman.h>
 #define RESTRICT_PITCH
 #define fRad2Deg  57.295779513f //将弧度转为角度的乘数
-#define fDeg2Rad  0.0174532925f
+#define fDeg2Rad  0.0174532925f //JW:1/fRad2Deg
 #define MPU 0x68 //MPU-6050的I2C地址
-#define nValCnt 7 //一次读取寄存器的数量
+#define nValCnt 7 //一次读取寄存器的数量 JW:应该是加速度计的xyz, 温度，和陀螺仪的xyz
 
 #define HMC 0x1E //001 1110b(0x3C>>1), HMC5883的7位i2c地址  
-#define MagnetcDeclination 0.0698131701f //所在地磁偏角，根据情况自行百度  
+#define MagnetcDeclination 0.0698131701f //所在地磁偏角，根据情况自行百度 JW:似乎没有用到 
 #define CalThreshold 2  //最大和最小值超过此值，则计算偏移值
 float offsetX,offsetY,offsetZ;  //磁场偏移
 float kalAngleX, kalAngleY,kalAngleZ; //横滚、俯仰、偏航角的卡尔曼融合值
-float Gryoyaw; //偏航角的地磁测量值
+float Gryoyaw; //偏航角的地磁测量值， JW:应该是陀螺仪测出的偏航角
 Kalman kalmanX; // 实例化卡尔曼滤波
 Kalman kalmanY;
-//Kalman kalmanZ;
+//Kalman kalmanZ; //JW:实例化偏航角的卡尔曼滤波后的值
 long timer;
 
 void setup() {
@@ -25,10 +25,10 @@ void setup() {
   //WriteMPUReg(0x6A, ReadMPUReg(0x6A)&0xDF);
   WriteMPUReg(0x37, ReadMPUReg(0x37)|0x02);  //开启mpu6050的IIC直通，连接磁场传感器
   float realVals[nValCnt];
-  for(int i=0;i<500;i++)ReadAccGyr(realVals); //读出测量值
+  for(int i=0;i<500;i++)ReadAccGyr(realVals); //JW:从MPU6050中读出测量值, 为什么要500次？
   float roll,pitch;
-  GetRollPitch(realVals,&roll,&pitch);
-  roll *= fRad2Deg; pitch *= fRad2Deg;
+  GetRollPitch(realVals,&roll,&pitch); //JW:从MPU6050中计算出roll和pitch弧度
+  roll *= fRad2Deg; pitch *= fRad2Deg; //JW:将弧度转换为角度
   kalmanX.setAngle(roll); // 设置初始角
   kalmanY.setAngle(pitch);
   
@@ -124,7 +124,7 @@ void ReadAccGyr(float *pVals) {
   }
 }
 
-//读取地磁数据
+//JW:读取HMC5883地磁数据
 void getRawData(int* x ,int* y,int* z)
 {
   Wire.beginTransmission(HMC);
@@ -155,7 +155,7 @@ float calculateHeading(int* x ,int* y,int* z)
  
   return headingDegrees;
 }
-//校正传感器
+//JW:校正HMC5883地磁传感器
 void calibrateMag()
 {
   int x,y,z; //三轴数据
@@ -217,7 +217,7 @@ void calibrateMag()
 }
 
 
-//算得Roll角。
+//JW:从MPU6050中算得Roll和pitch弧度角。
 void GetRollPitch(float *pRealVals,float* roll,float* pitch) {
 #ifdef RESTRICT_PITCH
   float fNorm = sqrt(pRealVals[1] * pRealVals[1] + pRealVals[2] * pRealVals[2]);
