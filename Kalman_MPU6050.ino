@@ -8,7 +8,7 @@
 #define nValCnt 7 //一次读取寄存器的数量 JW:应该是加速度计的xyz, 温度，和陀螺仪的xyz
 
 #define HMC 0x1E //001 1110b(0x3C>>1), HMC5883的7位i2c地址  
-#define MagnetcDeclination 0.0698131701f //所在地磁偏角，根据情况自行百度 JW:似乎没有用到 
+#define MagnetcDeclination 0.0698131701f //所在地磁偏角，根据情况自行百度
 #define CalThreshold 2  //最大和最小值超过此值，则计算偏移值
 float offsetX,offsetY,offsetZ;  //磁场偏移
 float kalAngleX, kalAngleY,kalAngleZ; //横滚、俯仰、偏航角的卡尔曼融合值
@@ -41,7 +41,7 @@ void setup() {
   Wire.write(0x02); //选择模式寄存器
   Wire.write(0x00); //连续测量模式:0x00,单一测量模式:0x01
   Wire.endTransmission();
-  calibrateMag();  //地磁计校准
+  calibrateMag();  //JW:通过旋转来做HMC5883地磁计校准
 //  int x,y,z;
 //  getRawData(&x,&y,&z); //获取地磁数据
 //  kalmanZ.setAngle(calculateYaw(pitch,roll,x,y,z) * fRad2Deg);  //设定卡尔曼滤波初始值
@@ -92,7 +92,7 @@ void loop() {
   delay(100);
 }
 
-//根据俯仰角和偏航角修正地磁传感器
+//根据俯仰角和偏航角修正地磁传感器 JW:返回弧度
 float calculateYaw(float Pitch,float Roll,int x ,int y,int z)
 {
   x = x-offsetX;
@@ -165,7 +165,7 @@ void calibrateMag()
   xMax=xMin=x;
   yMax=yMin=y;
   zMax=zMin=z;
-  offsetX = offsetY = offsetZ = 0;
+  offsetX = offsetY = offsetZ = 0; //JW:磁场的校正值
  
   Serial.println("Starting Calibration......");
   Serial.println("Please turn your device around in 20 seconds");
